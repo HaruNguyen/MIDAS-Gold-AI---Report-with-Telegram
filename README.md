@@ -83,10 +83,17 @@ Trong Telegram, chat với bot: `/accounts`, `/risk`, `/volume`, `/licenses`, `/
 - `build_daily_digest_text()` tổng hợp đúng số tài khoản theo từng nhóm, volume, doanh thu ước tính,
   danh sách cần chú ý, và license sắp hết hạn.
 
+## Deploy miễn phí (không cần VPS trả phí)
+
+Xem `deploy/DEPLOY_ORACLE.md` — hướng dẫn đầy đủ deploy lên **Oracle Cloud Always Free VM**
+(miễn phí vĩnh viễn, chạy 24/7, HTTPS tự động qua Caddy). Có sẵn `deploy/Dockerfile`,
+`deploy/docker-compose.yml`, `deploy/Caddyfile`, và phương án không-Docker `deploy/midas-report.service`
+(systemd) nếu muốn nhẹ RAM hơn trên VM cấu hình thấp.
+
 ## Bước tiếp theo khi triển khai thật
 
 1. Đưa `ReportModule.mqh` vào EA, set `Report_ServerURL`/`Report_ApiKey`, whitelist URL trong MT5.
-2. Deploy backend lên VPS (Docker hoặc systemd), đổi `DATABASE_URL` sang Postgres nếu nhiều tài khoản.
+2. Deploy backend theo `deploy/DEPLOY_ORACLE.md` (hoặc VPS khác nếu muốn), đổi `DATABASE_URL` sang Postgres nếu nhiều tài khoản.
 3. Tạo bot qua @BotFather, lấy `TELEGRAM_BOT_TOKEN`, lấy `TELEGRAM_CHAT_ID` (chat riêng hoặc group quản trị).
 4. Tinh chỉnh `IB_RATE_USD_PER_LOT` và các ngưỡng rủi ro trong `.env` theo thực tế từng sàn.
 5. (Nâng cấp) gắn `owner_label` cho từng tài khoản để biết tài khoản của khách nào, hoặc tách

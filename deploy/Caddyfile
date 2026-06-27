@@ -1,0 +1,11 @@
+# Doi "report.yourdomain.com" thanh domain thuc cua ban (domain phai co A record
+# tro ve IP public cua Oracle VM TRUOC KHI chay docker compose up, neu khong Caddy
+# se khong xin duoc cert Let's Encrypt).
+report.yourdomain.com {
+    reverse_proxy report-server:8000
+}
+
+# Khong co domain? Dung tam IP + http (MT5 WebRequest van chap nhan http, chi can
+# whitelist dung URL), bo nguyen file nay va doi Report_ServerURL trong EA thanh:
+#   http://<IP-VM>:8000/api/report
+# roi mo port 8000 o buoc "Mo firewall" trong DEPLOY_ORACLE.md, khong can Caddy.

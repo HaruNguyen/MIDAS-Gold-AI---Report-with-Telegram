@@ -1,0 +1,39 @@
+version: "3.8"
+
+services:
+  report-server:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    container_name: midas-report-server
+    restart: unless-stopped
+    env_file:
+      - ../.env
+    environment:
+      # Doi sang Postgres khi co nhieu tai khoan; SQLite du cho < ~50 tai khoan.
+      DATABASE_URL: sqlite:////app/data/midas_report.db
+    volumes:
+      - report_data:/app/data
+    expose:
+      - "8000"
+
+  # Caddy: reverse proxy + tu dong xin/renew SSL Let's Encrypt — chi can 1 domain
+  # tro A record ve IP cua VM nay la xong, khong can cau hinh certbot tay.
+  caddy:
+    image: caddy:2-alpine
+    container_name: midas-caddy
+    restart: unless-stopped
+    depends_on:
+      - report-server
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  report_data:
+  caddy_data:
+  caddy_config:

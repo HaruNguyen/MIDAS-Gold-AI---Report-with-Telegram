@@ -1,0 +1,29 @@
+; Phuong an KHONG dung Docker (nhe hon, hop voi VM Oracle Free RAM thap) —
+; chay truc tiep bang venv + systemd, tu dong restart khi crash hoac khi VM reboot.
+;
+; Cai dat:
+;   sudo cp deploy/midas-report.service /etc/systemd/system/midas-report.service
+;   sudo systemctl daemon-reload
+;   sudo systemctl enable --now midas-report
+;
+; Sua duong dan WorkingDirectory/ExecStart cho khop noi ban clone repo thuc te.
+
+[Unit]
+Description=MIDAS Gold AI Report Server (FastAPI + Telegram bot)
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/midas-report/Telegram_Report_App
+EnvironmentFile=/home/ubuntu/midas-report/Telegram_Report_App/.env
+ExecStart=/home/ubuntu/midas-report/Telegram_Report_App/.venv/bin/uvicorn backend.main:app --host 0.0.0.0 --port 8000
+Restart=always
+RestartSec=5
+
+; Tu restart logic an toan: neu crash lien tuc > 5 lan / 60s thi dung han, tranh loop vo han
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target
