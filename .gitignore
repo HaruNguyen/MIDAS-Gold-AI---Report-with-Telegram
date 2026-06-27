@@ -1,0 +1,17 @@
+# Env & secrets
+.env
+*.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# DB files (prototype data, không commit data thật)
+*.db
+*.db-journal
+*.sqlite3
+
+# OS
+.DS_Store
