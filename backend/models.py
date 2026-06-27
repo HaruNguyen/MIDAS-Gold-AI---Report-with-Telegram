@@ -32,6 +32,7 @@ class Snapshot(Base):
     balance = Column(Float)
     equity = Column(Float)
     margin_level = Column(Float)
+    free_margin = Column(Float, default=0.0)
     floating_pl = Column(Float)
     drawdown_pct = Column(Float)
 
@@ -39,6 +40,8 @@ class Snapshot(Base):
     buy_orders = Column(Integer)
     sell_orders = Column(Integer)
     total_lots = Column(Float)
+    buy_lots = Column(Float, default=0.0)
+    sell_lots = Column(Float, default=0.0)
     closed_lots_today = Column(Float)
 
     loop_active = Column(Boolean)

@@ -40,19 +40,29 @@ def base_payload(login, server, preset, is_cent, license_days):
 
 
 def snapshot(payload, balance, equity, total_orders, buy, sell, total_lots,
-             closed_lots_today, ai_confidence, hedge_active=False):
+             closed_lots_today, ai_confidence, hedge_active=False,
+             buy_lots=None, sell_lots=None):
     payload = dict(payload)
     drawdown_pct = max(0.0, (balance - equity) / balance * 100) if balance else 0
+    margin_level = random.uniform(150, 800)
+    free_margin = max(0.0, equity - (equity / margin_level * 100 if margin_level else 0))
+    if buy_lots is None:
+        buy_lots = round(total_lots * (buy / total_orders if total_orders else 0.5), 2)
+    if sell_lots is None:
+        sell_lots = round(total_lots - buy_lots, 2)
     payload.update({
         "balance": balance,
         "equity": equity,
-        "margin_level": random.uniform(150, 800),
+        "margin_level": margin_level,
+        "free_margin": round(free_margin, 2),
         "floating_pl": equity - balance,
         "drawdown_pct": round(drawdown_pct, 2),
         "total_orders": total_orders,
         "buy_orders": buy,
         "sell_orders": sell,
         "total_lots": total_lots,
+        "buy_lots": buy_lots,
+        "sell_lots": sell_lots,
         "closed_lots_today": closed_lots_today,
         "hedge_active": hedge_active,
         "ai_confidence": ai_confidence,

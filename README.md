@@ -50,6 +50,15 @@ ngoài 1 server nhỏ.
 4. **Hiệu suất AI & cấu hình**: AI confidence hiện tại, preset (Master Alpha/Elite), Zone/TP/Multiplier
    đang chạy.
 
+## Mẫu báo cáo chi tiết theo tài khoản ("Report Daily")
+
+Lệnh `/account <login>` và job tự động hàng ngày (`daily_account_reports`, chạy 1 phút sau digest)
+gửi 1 tin chi tiết riêng cho từng tài khoản — Balance/Equity/Drawdown/Margin, sức khỏe bộ lệnh,
+Buy/Sell/Net lot — cộng thêm 3 nhóm chỉ số tối ưu mà mẫu báo cáo cơ bản chưa có: Volume & doanh thu IB
+hôm nay, AI & cấu hình (preset/multiplier/AI confidence/Zone-TP/Loop-Hedge), và hạn thuê bot còn lại.
+Xem hàm `format_account_report()` trong `backend/telegram_bot.py`. Cần EA gửi thêm `free_margin`,
+`buy_lots`, `sell_lots` (đã thêm vào `ReportModule.mqh`) để hiển thị đầy đủ.
+
 ## Cách chạy thử (prototype)
 
 ```bash

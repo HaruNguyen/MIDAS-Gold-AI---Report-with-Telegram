@@ -15,6 +15,7 @@ class ReportIn(BaseModel):
     balance: float
     equity: float
     margin_level: float = 0.0
+    free_margin: float = 0.0
     floating_pl: float = 0.0
     drawdown_pct: float = 0.0
 
@@ -22,6 +23,8 @@ class ReportIn(BaseModel):
     buy_orders: int = 0
     sell_orders: int = 0
     total_lots: float = 0.0
+    buy_lots: float = 0.0
+    sell_lots: float = 0.0
     closed_lots_today: float = 0.0
 
     loop_active: bool = True

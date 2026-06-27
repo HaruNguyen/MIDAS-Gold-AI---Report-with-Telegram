@@ -77,6 +77,7 @@ void ReportSendSnapshot(string symbol, bool loopActive, bool hedgeActive,
    double balance     = AccountInfoDouble(ACCOUNT_BALANCE);
    double equity      = AccountInfoDouble(ACCOUNT_EQUITY);
    double marginLevel = AccountInfoDouble(ACCOUNT_MARGIN_LEVEL);
+   double freeMargin  = AccountInfoDouble(ACCOUNT_MARGIN_FREE);
    double floatingPL  = equity - balance;
    double drawdownPct = (balance > 0) ? (balance - equity) / balance * 100.0 : 0.0;
    long   login        = AccountInfoInteger(ACCOUNT_LOGIN);
@@ -100,12 +101,15 @@ void ReportSendSnapshot(string symbol, bool loopActive, bool hedgeActive,
       "\"balance\":%.2f,"
       "\"equity\":%.2f,"
       "\"margin_level\":%.2f,"
+      "\"free_margin\":%.2f,"
       "\"floating_pl\":%.2f,"
       "\"drawdown_pct\":%.2f,"
       "\"total_orders\":%d,"
       "\"buy_orders\":%d,"
       "\"sell_orders\":%d,"
       "\"total_lots\":%.2f,"
+      "\"buy_lots\":%.2f,"
+      "\"sell_lots\":%.2f,"
       "\"closed_lots_today\":%.2f,"
       "\"loop_active\":%s,"
       "\"hedge_active\":%s,"
@@ -120,8 +124,8 @@ void ReportSendSnapshot(string symbol, bool loopActive, bool hedgeActive,
       "}",
       Report_ApiKey, login, server, symbol, Report_PresetName,
       isCent ? "true" : "false",
-      balance, equity, marginLevel, floatingPL, drawdownPct,
-      totalOrders, buyOrders, sellOrders, totalLots, closedLotsToday,
+      balance, equity, marginLevel, freeMargin, floatingPL, drawdownPct,
+      totalOrders, buyOrders, sellOrders, totalLots, buyLots, sellLots, closedLotsToday,
       loopActive ? "true" : "false", hedgeActive ? "true" : "false",
       aiConfidence, zonePoints, tpPoints, multiplier, maxOrders,
       health,

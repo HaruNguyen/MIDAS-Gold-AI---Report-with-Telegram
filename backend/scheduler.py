@@ -28,6 +28,17 @@ async def job_daily_digest():
         db.close()
 
 
+async def job_daily_account_reports():
+    """Gui 1 tin 'Report Daily' chi tiet rieng cho moi tai khoan (giong mau hinh tham khao)."""
+    db = SessionLocal()
+    try:
+        await notifier.daily_account_reports(db)
+    except Exception:
+        logger.exception("Loi khi gui daily account reports")
+    finally:
+        db.close()
+
+
 async def job_license_check():
     db = SessionLocal()
     try:
@@ -50,8 +61,13 @@ def start_scheduler() -> AsyncIOScheduler:
         id="daily_digest",
     )
     scheduler.add_job(
-        job_license_check, "cron",
+        job_daily_account_reports, "cron",
         hour=settings.DAILY_DIGEST_HOUR, minute=settings.DAILY_DIGEST_MINUTE + 1,
+        id="daily_account_reports",
+    )
+    scheduler.add_job(
+        job_license_check, "cron",
+        hour=settings.DAILY_DIGEST_HOUR, minute=settings.DAILY_DIGEST_MINUTE + 2,
         id="license_check",
     )
     scheduler.start()

@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 from .config import settings
 from .database import SessionLocal
 from .models import Account, Snapshot
-from .risk import HEALTH_EMOJI, estimate_ib_revenue
+from .risk import HEALTH_EMOJI, HEALTH_VN, HEALTH_DESC, estimate_ib_revenue
 
 logger = logging.getLogger("midas_report.telegram")
 
@@ -66,6 +66,79 @@ class Notifier:
     async def daily_digest(self, db: Session):
         text = build_daily_digest_text(db)
         await self.send(text)
+
+    async def daily_account_reports(self, db: Session):
+        """Gui 1 tin 'Report Daily' chi tiet rieng cho MOI tai khoan (giong mau hinh tham khao),
+        kem cac chi so toi uu: volume/doanh thu IB, han license, AI & cau hinh."""
+        accounts = db.query(Account).all()
+        for acc in accounts:
+            last = (
+                db.query(Snapshot)
+                .filter(Snapshot.account_id == acc.id)
+                .order_by(Snapshot.reported_at.desc())
+                .first()
+            )
+            if not last:
+                continue
+            await self.send(format_account_report(acc, last))
+
+
+def format_account_report(account: Account, snap: Snapshot) -> str:
+    """Tin bao cao chi tiet 1 tai khoan, style giong 'Report Daily' tham khao,
+    bo sung them Volume/IB, han license, AI & cau hinh de toi uu hon cho chu bot."""
+    unit = "USC" if account.is_cent else "USD"
+    emoji = HEALTH_EMOJI.get(snap.health_status, "⚪")
+    health_vn = HEALTH_VN.get(snap.health_status, snap.health_status)
+    health_desc = HEALTH_DESC.get(snap.health_status, "")
+    pl_emoji = "🔴" if (snap.floating_pl or 0) < 0 else "🟢"
+    net_lot = (snap.buy_lots or 0) - (snap.sell_lots or 0)
+
+    ib_revenue = estimate_ib_revenue(snap.closed_lots_today or 0)
+
+    days_remaining = None
+    if account.license_expiry:
+        days_remaining = (account.license_expiry - date.today()).days
+
+    cent_tag = " · Cent" if account.is_cent else ""
+    sep = "─" * 20
+
+    lines = [
+        "🤖 <b>Bot báo cáo MIDAS đã khởi động.</b>",
+        "📊 <b>BÁO CÁO TÀI KHOẢN</b>",
+        f"#<code>{account.login}</code> · {account.server}",
+        f"🕐 {snap.reported_at:%d/%m/%Y %H:%M:%S} (GMT+7)",
+        sep,
+        f"💰 Số dư (Balance): <b>{snap.balance:,.2f} {unit}</b>",
+        f"📈 Vốn thực (Equity): <b>{snap.equity:,.2f} {unit}</b>",
+        f"{pl_emoji} P/L thả nổi: <b>{snap.floating_pl:,.2f} {unit}</b>",
+        f"📉 Drawdown: <b>{snap.drawdown_pct:.2f}%</b>",
+        f"🛡 Margin level: <b>{snap.margin_level:,.0f}%</b>",
+        f"💵 Margin trống (free): <b>{(snap.free_margin or 0):,.2f} {unit}</b>",
+        sep,
+        f"{emoji} <b>SỨC KHỎE BỘ LỆNH: {health_vn}</b>",
+        f"<i>{health_desc}</i>",
+        f"🔢 Lệnh Gold đang mở: <b>{snap.total_orders}</b> (ngưỡng: &lt;15 an toàn · ≥26 hedge)",
+        f"  • Buy: {snap.buy_orders} lệnh / {(snap.buy_lots or 0):.2f} lot  |  "
+        f"Sell: {snap.sell_orders} lệnh / {(snap.sell_lots or 0):.2f} lot",
+        f"  • Net lot: <b>{net_lot:+.2f}</b>",
+        sep,
+        "💹 <b>VOLUME &amp; DOANH THU IB (hôm nay)</b>",
+        f"  • Lot khớp: {snap.closed_lots_today:.2f} lot",
+        f"  • Doanh thu ước tính: <b>${ib_revenue:,.2f}</b> (${settings.IB_RATE_USD_PER_LOT}/lot)",
+        sep,
+        "🧠 <b>AI &amp; CẤU HÌNH</b>",
+        f"  • Preset: {account.preset} ({snap.multiplier}x){cent_tag}",
+        f"  • AI Confidence: {snap.ai_confidence:.0f}%",
+        f"  • Zone/TP: {snap.zone_points:.0f} / {snap.tp_points:.0f} điểm",
+        f"  • Loop: {'ON' if snap.loop_active else 'OFF'} | Hedge: {'ON ⚠️' if snap.hedge_active else 'OFF'}",
+    ]
+
+    if days_remaining is not None:
+        lines.append(sep)
+        lines.append("📅 <b>HẠN THUÊ BOT</b>")
+        lines.append(f"  • Còn lại: <b>{days_remaining} ngày</b> (hết hạn {account.license_expiry})")
+
+    return "\n".join(lines)
 
 
 def build_daily_digest_text(db: Session) -> str:
@@ -188,19 +261,7 @@ async def cmd_account(update, context: ContextTypes.DEFAULT_TYPE):
         if not last:
             await update.message.reply_text("Tài khoản chưa có dữ liệu báo cáo.")
             return
-        emoji = HEALTH_EMOJI.get(last.health_status, "⚪")
-        text = (
-            f"{emoji} <b>{acc.login}</b> — {acc.preset} ({'Cent' if acc.is_cent else 'USD'})\n"
-            f"Server: {acc.server} | Symbol: {acc.symbol}\n"
-            f"Balance: {last.balance:,.2f} | Equity: {last.equity:,.2f}\n"
-            f"Floating P/L: {last.floating_pl:,.2f} | Drawdown: {last.drawdown_pct:.1f}%\n"
-            f"Lệnh mở: {last.total_orders} (Buy {last.buy_orders}/Sell {last.sell_orders}) | Tổng lot: {last.total_lots:.2f}\n"
-            f"Zone: {last.zone_points}pts | TP: {last.tp_points}pts | Multiplier: {last.multiplier} | Max orders: {last.max_orders}\n"
-            f"Loop: {'ON' if last.loop_active else 'OFF'} | Hedge: {'ON' if last.hedge_active else 'OFF'}\n"
-            f"AI Confidence: {last.ai_confidence:.0f}%\n"
-            f"License hết hạn: {acc.license_expiry}\n"
-            f"Cập nhật: {last.reported_at:%Y-%m-%d %H:%M}"
-        )
+        text = format_account_report(acc, last)
         await update.message.reply_text(text, parse_mode=ParseMode.HTML)
     finally:
         db.close()

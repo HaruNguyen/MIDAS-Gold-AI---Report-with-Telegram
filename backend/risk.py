@@ -17,6 +17,20 @@ HEALTH_EMOJI = {
     "HEDGE_LOCKED": "⛔",
 }
 
+HEALTH_VN = {
+    "SAFE": "AN TOÀN",
+    "WATCH": "THEO DÕI",
+    "CRITICAL": "NGUY HIỂM",
+    "HEDGE_LOCKED": "HEDGE LOCK",
+}
+
+HEALTH_DESC = {
+    "SAFE": "Bộ lệnh khỏe, chạy đúng kịch bản toán học. Để cho máy làm việc.",
+    "WATCH": "AI đang can thiệp nâng lot từ lệnh thứ 15. Theo dõi sát, chưa cần hành động.",
+    "CRITICAL": "Bộ lệnh sát ngưỡng Hedge (≥26 lệnh hoặc DD cao). Cần chú ý, chuẩn bị kịch bản xử lý.",
+    "HEDGE_LOCKED": "Đã kích hoạt Hedge — chế độ phòng thủ cuối. Theo dõi liên tục tới khi thoát Hedge.",
+}
+
 
 def classify_health(total_orders: int, hedge_active: bool, drawdown_pct: float) -> str:
     if hedge_active:
